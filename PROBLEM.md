@@ -91,7 +91,7 @@ Calculate the total sales amount for each order.
 ## Submission
 
 - Document each step of your process, explaining your setup, transformations, and any decisions made during the assignment in a file named `DECISIONS.md`.
-- Publish your project to a public GitHub repository and share the link with us.
+- Publish your project to a public GitHub repository and share the link with us by email.
 - Incldue a `README.md` file with instructions on how to run your project.
 - The queries to answer the questions should be included in the `queries` folder in separate `.sql` files.
 
