@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: bronze
+    database: HOME_ASSIGNMENT
+    schema: BRONZE
+    tables:
+      - name: raw_sales_data
+      - name: raw_customer_data
