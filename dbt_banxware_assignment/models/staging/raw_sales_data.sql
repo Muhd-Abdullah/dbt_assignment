@@ -22,9 +22,4 @@ select
 
   -- parsed date
   try_to_date(order_date, 'MM/DD/YYYY') as order_date,
-
-  -- metadata
-  current_timestamp() as created_at,
-  'sales.csv' as source_file
-
 from src

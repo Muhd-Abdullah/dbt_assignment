@@ -3,9 +3,7 @@
 with base as (
   select
     product_id,
-    product_name,
-    created_at,
-    source_file
+    product_name
   from {{ ref('int_transformed_sales_data') }}
   where product_id is not null
 ),
@@ -15,7 +13,10 @@ deduped as (
   from base
   qualify row_number() over (
     partition by product_id
-    order by created_at desc, product_name
+    order by
+      (product_name is not null) desc,
+      length(product_name) desc,
+      product_name asc          
   ) = 1
 )
 

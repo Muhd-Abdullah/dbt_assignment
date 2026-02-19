@@ -5,7 +5,10 @@ with deduped as (
   from {{ ref('raw_customer_data') }}
   qualify row_number() over (
     partition by customer_id
-    order by created_at desc, customer_name
+    order by
+      (customer_name is not null) desc,
+      length(customer_name) desc,
+      customer_name
   ) = 1
 )
 

@@ -1,0 +1,72 @@
+version: 2
+
+models:
+  - name: raw_sales_data
+    description: |
+      Staging model for sales data sourced from the bronze layer.
+      This model standardizes column names, casts data types
+
+    columns:
+      - name: sales_uuid
+        description: "Surrogate identifier for each sales line item, generated from order_id and product_id."
+        tests:
+          - not_null
+
+      - name: order_id
+        description: "Unique identifier representing a customer order. Multiple products can belong to the same order."
+        tests:
+          - not_null
+
+      - name: customer_id
+        description: "Foreign key referencing the customer who placed the order."
+        tests:
+          - not_null
+
+      - name: product_id
+        description: "Unique identifier of the product sold."
+        tests:
+          - not_null
+
+      - name: product_name
+        description: "Descriptive name of the product associated with the product_id."
+        tests:
+          - not_null
+
+      - name: order_date
+        description: "Date when the order was placed. Used for time-based analysis and joins to the date dimension."
+        tests:
+          - not_null
+
+      - name: quantity
+        description: "Number of product units sold in the order line item."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "{{ column_name }} > 0"
+
+      - name: price
+        description: "Unit price of the product at the time of the transaction."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "{{ column_name }} > 0"
+
+
+  - name: raw_customer_data
+    description: |
+      Staging model for customer data sourced from the bronze layer.
+      This model standardizes and cleans customer records.
+
+    columns:
+      - name: customer_id
+        description: "Unique identifier for each customer."
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_name
+        description: "Full name or display name of the customer."
+        tests:
+          - not_null

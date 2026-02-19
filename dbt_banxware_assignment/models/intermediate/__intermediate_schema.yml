@@ -1,0 +1,128 @@
+version: 2
+
+models:
+
+  - name: int_transformed_sales_data
+    description: |
+      Intermediate sales model containing cleaned and deduplicated
+      sales line items enriched with derived metrics.
+      
+      Grain: One row per sales line item (sales_uuid).
+      
+      Transformations performed:
+      - Filters invalid records (quantity > 0 and price > 0)
+      - Deduplicates records at sales_uuid level
+      - Derives total_sales_amount as quantity * price
+
+    columns:
+      - name: sales_uuid
+        description: "Surrogate key uniquely identifying each sales line item (combination of order_id and product_id)."
+        tests:
+          - not_null
+          - unique
+
+      - name: order_id
+        description: "Identifier of the order associated with the sales line item."
+        tests:
+          - not_null
+
+      - name: customer_id
+        description: "Identifier of the customer who placed the order."
+        tests:
+          - not_null
+
+      - name: product_id
+        description: "Identifier of the product sold in the transaction."
+        tests:
+          - not_null
+
+      - name: order_date
+        description: "Date when the order was placed."
+        tests:
+          - not_null
+
+      - name: total_sales_amount
+        description: "Total revenue generated for the line item (quantity × price)."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "{{ column_name }} > 0"
+
+
+
+  - name: int_customer
+    description: |
+      Intermediate customer dimension preparation layer.
+      Applies deterministic deduplication logic to ensure
+      one record per customer_id.
+
+      Grain: One row per customer_id.
+
+    columns:
+      - name: customer_id
+        description: "Unique identifier for each customer."
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_name
+        description: "Customer display name selected using deterministic deduplication logic."
+        tests:
+          - not_null
+
+
+
+  - name: int_product
+    description: |
+      Intermediate product dimension preparation layer.
+      Applies deterministic deduplication logic to ensure
+      one record per product_id.
+
+      Grain: One row per product_id.
+
+    columns:
+      - name: product_id
+        description: "Unique identifier for each product."
+        tests:
+          - not_null
+          - unique
+
+      - name: product_name
+        description: "Descriptive name of the product selected using deterministic deduplication logic."
+        tests:
+          - not_null
+
+
+
+  - name: int_orders
+    description: |
+      Intermediate order header model representing
+      one consolidated record per order.
+
+      Grain: One row per order_id.
+
+      Purpose:
+      - Extract order-level attributes
+      - Deduplicate orders
+      - Prepare clean header data for dimensional modeling
+
+    columns:
+      - name: order_id
+        description: "Unique identifier of the order."
+        tests:
+          - not_null
+          - unique
+
+      - name: order_date
+        description: "Date the order was placed."
+        tests:
+          - not_null
+
+      - name: order_status
+        description: "Current status of the order (e.g., completed, cancelled)."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Completed', 'Pending', 'Cancelled']

@@ -1,0 +1,244 @@
+version: 2
+
+models:
+
+  - name: dim_customer
+    description: |
+      Customer dimension used for customer-level slicing and aggregation.
+
+      Grain: One row per customer_id.
+
+    columns:
+      - name: customer_id
+        description: "Business key identifying the customer."
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_name
+        description: "Customer display name."
+        tests:
+          - not_null
+
+
+
+  - name: dim_product
+    description: |
+      Product dimension used for product-level slicing and aggregation.
+
+      Grain: One row per product_id.
+
+    columns:
+      - name: product_id
+        description: "Business key identifying the product."
+        tests:
+          - not_null
+          - unique
+
+      - name: product_name
+        description: "Human-readable product name."
+        tests:
+          - not_null
+
+
+
+  - name: dim_orders
+    description: |
+      Order header dimension that represents order-level attributes.
+
+      Grain: One row per order_id.
+
+      Notes:
+      - This table is useful for filtering/segmenting orders by header attributes
+        and for enforcing referential integrity from facts to orders.
+
+    columns:
+      - name: order_id
+        description: "Business key identifying the order."
+        tests:
+          - not_null
+          - unique
+
+      - name: order_date
+        description: "Date the order was placed (used to join to dim_date)."
+        tests:
+          - not_null
+
+      # If you have it in the model, document it here too:
+      # - name: order_status
+      #   description: "Current status of the order (if available in source)."
+
+
+
+  - name: dim_date
+    description: |
+      Date dimension used for time-based analysis and reporting.
+
+      Grain: One row per calendar day.
+
+    columns:
+      - name: date_day
+        description: "Calendar date (YYYY-MM-DD). Primary key of the date dimension."
+        tests:
+          - not_null
+          - unique
+
+      - name: year
+        description: "Calendar year extracted from date_day."
+        tests:
+          - not_null
+
+      - name: month
+        description: "Calendar month number (1–12) extracted from date_day."
+        tests:
+          - not_null
+
+      - name: day
+        description: "Day of month (1–31) extracted from date_day."
+        tests:
+          - not_null
+
+
+
+  - name: fct_transformed_sales_data
+    description: |
+      Sales fact table representing transaction-level revenue.
+
+      Grain: One row per sales line item (sales_uuid), typically representing
+      a unique (order_id, product_id) combination.
+
+      This table is the primary source for sales metrics such as
+      total sales amount, sales by product, sales by customer, etc.
+
+    columns:
+      - name: sales_uuid
+        description: "Surrogate key uniquely identifying the sales line item."
+        tests:
+          - not_null
+          - unique
+
+      - name: order_id
+        description: "Order business key associated with the sales line item."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_orders')
+                field: order_id
+
+      - name: customer_id
+        description: "Customer business key associated with the sales line item."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customer')
+                field: customer_id
+
+      - name: product_id
+        description: "Product business key associated with the sales line item."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_product')
+                field: product_id
+
+      - name: date_day
+        description: "Order date (YYYY-MM-DD) used for time-based analysis (joins to dim_date.date_day)."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
+
+      - name: quantity
+        description: "Number of units sold for the sales line item."
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                inclusive: true
+
+      - name: price
+        description: "Unit price of the product at the time of sale."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "{{ column_name }} > 0"
+
+      - name: total_sales_amount
+        description: "Revenue for the sales line item (quantity × price)."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "{{ column_name }} > 0"
+
+  - name: agg_completed_orders
+    description: |
+      Aggregated mart representing order-level metrics
+      for completed orders only.
+
+      Grain: One row per order_id.
+
+      This model is optimized for KPI reporting such as:
+      - average order value (AOV)
+      - completed order totals by customer/month
+      - completed order counts and revenue trends
+
+    columns:
+      - name: order_id
+        description: "Order business key. Primary key of this aggregate table."
+        tests:
+          - not_null
+          - unique
+
+      - name: order_status
+        description: "Order status. This mart only contains 'Completed' orders."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Completed']
+
+      - name: customer_id
+        description: "Customer business key associated with the completed order."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customer')
+                field: customer_id
+
+      - name: customer_name
+        description: "Customer display name from dim_customer."
+        tests:
+          - not_null
+
+      - name: year
+        description: "Calendar year of the completed order (derived from dim_date)."
+        tests:
+          - not_null
+
+      - name: month
+        description: "Calendar month number (1–12) of the completed order."
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 12
+                inclusive: true
+
+      - name: order_total_sales_amount
+        description: "Total revenue per completed order (sum of all sales line items)."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "{{ column_name }} > 0"
+

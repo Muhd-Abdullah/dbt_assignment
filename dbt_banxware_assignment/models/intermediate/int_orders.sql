@@ -4,9 +4,7 @@ with base as (
   select
     order_id,
     order_date,
-    order_status,
-    created_at,
-    source_file
+    order_status
   from {{ ref('int_transformed_sales_data') }}
   where order_id is not null
 ),
@@ -16,7 +14,12 @@ deduped as (
   from base
   qualify row_number() over (
     partition by order_id
-    order by order_date desc, created_at desc
+    order by
+      (order_status is not null) desc,
+      (order_date is not null) desc,
+      order_status asc,
+      order_date desc nulls last, 
+      order_id asc 
   ) = 1
 )
 

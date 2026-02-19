@@ -8,8 +8,4 @@ with src as (
 select
   id::number as customer_id,
   name::string as customer_name,
-
-  current_timestamp() as created_at,
-  'customers.csv' as source_file
-
 from src

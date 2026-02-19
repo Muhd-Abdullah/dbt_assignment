@@ -1,3 +1,5 @@
+{{ config(materialized='table') }}
+
 with bounds as (
   select
     dateadd(month, -1, min(order_date)) as start_date,
