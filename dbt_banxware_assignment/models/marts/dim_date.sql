@@ -1,18 +1,16 @@
 with bounds as (
   select
-    min(order_date) as min_date,
-    max(order_date) as max_date
+    dateadd(month, -1, min(order_date)) as start_date,
+    dateadd(month,  1, max(order_date)) as end_date
   from {{ ref('int_transformed_sales_data') }}
 ),
 
 date_raw as (
-
-  {{ dbt_utils.date_spine(
-      datepart="day",
-      start_date="(select min_date from bounds)",
-      end_date="(select max_date from bounds)"
-  ) }}
-
+  select
+    dateadd(day, seq4(), b.start_date) as date_day,
+    b.end_date
+  from bounds b,
+       table(generator(rowcount => 10000))
 )
 
 select
@@ -24,4 +22,5 @@ select
   weekofyear(date_day) as week_of_year,
   quarter(date_day) as quarter
 from date_raw
-order by date_day;
+where date_day <= end_date
+order by date_day

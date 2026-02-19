@@ -1,25 +1,27 @@
+{{ config(materialized='table') }}
+
 select
-  -- PK
-  sales_uuid,
+  s.sales_uuid,
 
-  -- FKs (business keys)
-  order_id,
-  customer_id,
-  product_id,
+  -- FKs
+  s.order_id,
+  s.customer_id,
+  s.product_id,
+  s.order_date as date_day,
 
-  -- date FK
-  order_date,
+  -- Date attributes from dim_date
+  d.year,
+  d.month,
+  d.day,
 
-  -- measures & attributes
-  order_year,
-  order_month,
-  order_day,
-  quantity,
-  price,
-  total_sales_amount,
-  order_status,
+  -- Measures
+  s.quantity,
+  s.price,
+  s.total_sales_amount as total_sales_amount
 
-  -- metadata from upstream
-  created_at,
-  source_file
-from {{ ref('int_transformed_sales_data') }}
+from {{ ref('int_transformed_sales_data') }} s
+inner join {{ ref('dim_orders') }}   o on s.order_id = o.order_id
+inner join {{ ref('dim_customer') }} c on s.customer_id = c.customer_id
+inner join {{ ref('dim_product') }}  p on s.product_id = p.product_id
+inner join {{ ref('dim_date') }}     d on s.order_date = d.date_day
+
