@@ -42,8 +42,8 @@ select
   s.total_sales_amount as total_sales_amount
 
 from {{ ref('int_transformed_sales_data') }} s
-left  join {{ ref('dim_orders') }}   o on s.order_id = o.order_id
-left  join {{ ref('dim_customer') }} c on s.customer_id = c.customer_id
-left  join {{ ref('dim_product') }}  p on s.product_id = p.product_id
-left  join {{ ref('dim_date') }}     d on s.order_date = d.date_day
+join {{ ref('dim_orders') }}   o on s.order_id = o.order_id
+join {{ ref('dim_customer') }} c on s.customer_id = c.customer_id
+join {{ ref('dim_product') }}  p on s.product_id = p.product_id
+join {{ ref('dim_date') }}     d on s.order_date = d.date_day
 
