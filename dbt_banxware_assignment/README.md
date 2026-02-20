@@ -24,8 +24,8 @@ This project follows a **Medallion Architecture**:
 
 | Layer | dbt Folder | Purpose |
 |-------|------------|----------|
-| 🥉 Bronze | `staging/` | Raw ingestion & minimal cleaning |
-| 🥈 Silver | `intermediate/` | Business logic & transformation |
+| 🥉 Bronze | | Raw ingestion  |
+| 🥈 Silver | `staging/`  `intermediate/` | minimal cleaning,  Business logic & transformation |
 | 🥇 Gold | `marts/` | Star schema (fact + dimension tables) |
 
 ---
@@ -81,13 +81,8 @@ dbt_banxware_assignment/
 
 # 🥉 Bronze Layer (Staging)
 
-Models:
-- `raw_customer_data`
-- `raw_sales_data`
-
 Purpose:
 - Load seed data into Snowflake
-- Apply basic casting and cleanup
 - Preserve raw structure
 
 Data is loaded using:
@@ -98,6 +93,8 @@ dbt seed
 # 🥈 Silver Layer (Intermediate)
 
 Models:
+- `raw_customer_data`
+- `raw_sales_data`
 - `int_customer`
 - `int_product`
 - `int_orders`
@@ -105,7 +102,7 @@ Models:
 
 ## Purpose
 
-The Silver layer applies business logic and prepares clean, structured datasets for dimensional modeling.
+The Silver layer applies basic casting, cleanup, business logic and prepares clean, structured datasets for dimensional modeling.
 
 ### Key Transformations
 
@@ -115,10 +112,6 @@ The Silver layer applies business logic and prepares clean, structured datasets 
   - Customers
   - Products
   - Orders
-- Extraction of:
-  - `year`
-  - `month`
-  - `day` from `order_date`
 - Calculation of total sales amount per order
 
 This layer acts as the refined, analytics-ready foundation for the Gold layer.
