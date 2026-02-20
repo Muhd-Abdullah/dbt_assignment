@@ -255,6 +255,20 @@ Important versions:
 - `dbt-snowflake==1.9.2`
 
 ## 3️⃣ Configure Snowflake Profile
+`Optional`:
+Log into Snowflake and run:
+
+```sql
+create database if not exists home_assignment;
+
+use database home_assignment;
+
+create schema if not exists bronze;
+create schema if not exists silver;
+create schema if not exists gold;
+
+```
+
 Create the following file:
 
 ```bash
@@ -280,6 +294,7 @@ Test the connection:
 ```bash
 dbt debug
 ```
+
 
 ## 4️⃣ Load Seed Data
 ```bash
