@@ -46,8 +46,7 @@ models:
         tests:
           - not_null
           - expression_is_true:
-              arguments:
-                expression: "total_sales_amount > 0"
+              expression: "total_sales_amount > 0"
 
 
 
@@ -124,5 +123,4 @@ models:
         tests:
           - not_null
           - accepted_values:
-              arguments:
-                values: ['Completed', 'Pending', 'Cancelled']
+              values: ['Completed', 'Pending', 'Cancelled']
