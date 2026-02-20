@@ -224,14 +224,7 @@ models:
               min_value: 1
               max_value: 12
               inclusive: true
-
-      - name: order_status
-        description: "Order status from dim_orders. This mart only contains 'Completed' orders."
-        tests:
-          - not_null
-          - accepted_values:
-              values: ['Completed']
-
+              
       - name: order_total_sales_amount
         description: "Total revenue per completed order (sum of all sales line items)."
         tests:
