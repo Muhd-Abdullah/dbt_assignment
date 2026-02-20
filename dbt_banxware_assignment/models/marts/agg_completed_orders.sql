@@ -1,3 +1,29 @@
+-- -----------------------------------------------------------------------------
+-- MODEL: agg_completed_orders
+--
+-- LAYER
+--   Marts (Aggregate)
+--
+-- PURPOSE
+--   Order-level aggregate mart for reporting on Completed orders only.
+--   Computes total order revenue by summing line-item revenue per order and
+--   enriches with customer name and date attributes (year/month).
+--
+-- UPSTREAM
+--   ref('fct_transformed_sales_data')  (order totals)
+--   ref('dim_orders')                 (order_status filtering)
+--   ref('dim_customer')               (customer_name)
+--   ref('dim_date')                   (year/month)
+--
+-- GRAIN
+--   One row per order_id.
+--
+-- METRICS
+--   - order_total_sales_amount: SUM(total_sales_amount) per order, rounded to 2 decimals
+--
+-- FILTERING
+--   - Only includes orders where dim_orders.order_status = 'Completed'
+-- -----------------------------------------------------------------------------
 {{ config(materialized='table') }}
 
 with orders as (

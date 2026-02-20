@@ -1,3 +1,31 @@
+-- -----------------------------------------------------------------------------
+-- MODEL: fct_transformed_sales_data
+--
+-- LAYER
+--   Marts (Fact)
+--
+-- PURPOSE
+--   Sales fact table at the sales line-item grain. Contains foreign keys to
+--   dimensions and measures used for revenue analytics.
+--
+-- UPSTREAM
+--   ref('int_transformed_sales_data')
+--
+-- GRAIN
+--   One row per sales_uuid (i.e., unique order_id + product_id line item).
+--
+-- PRIMARY KEY
+--   sales_uuid
+--
+-- FOREIGN KEYS
+--   - order_id    -> dim_orders.order_id
+--   - customer_id -> dim_customer.customer_id
+--   - product_id  -> dim_product.product_id
+--   - date_day    -> dim_date.date_day
+--
+-- IMPLEMENTATION NOTES
+--   - date_day is derived from s.order_date to match dim_date grain.
+-- -----------------------------------------------------------------------------
 {{ config(materialized='table') }}
 
 select

@@ -6,9 +6,9 @@ models:
     description: |
       Intermediate sales model containing cleaned and deduplicated
       sales line items enriched with derived metrics.
-      
+
       Grain: One row per sales line item (sales_uuid).
-      
+
       Transformations performed:
       - Filters invalid records (quantity > 0 and price > 0)
       - Deduplicates records at sales_uuid level
@@ -16,38 +16,60 @@ models:
 
     columns:
       - name: sales_uuid
-        description: "Surrogate key uniquely identifying each sales line item (combination of order_id and product_id)."
+        description: "Stable surrogate key uniquely identifying each sales line item (generated upstream, typically from order_id and product_id)."
         tests:
           - not_null
           - unique
 
       - name: order_id
-        description: "Identifier of the order associated with the sales line item."
+        description: "Order business key associated with the sales line item."
+        tests:
+          - not_null
+          - relationships:
+              to: "{{ ref('int_orders') }}"
+              field: order_id
+
+      - name: order_date
+        description: "Date the order was placed (parsed date)."
         tests:
           - not_null
 
       - name: customer_id
-        description: "Identifier of the customer who placed the order."
+        description: "Customer business key associated with the order."
         tests:
           - not_null
+          - relationships:
+              to: "{{ ref('int_customer') }}"
+              field: customer_id
 
       - name: product_id
-        description: "Identifier of the product sold in the transaction."
+        description: "Product business key sold on this line item."
         tests:
           - not_null
+          - relationships:
+              to: "{{ ref('int_product') }}"
+              field: product_id
 
-      - name: order_date
-        description: "Date when the order was placed."
+      - name: quantity
+        description: "Number of product units sold on the line item."
         tests:
           - not_null
+          - expression_is_true:
+              expression: "quantity > 0"
+
+      - name: price
+        description: "Unit price of the product at the time of the transaction."
+        tests:
+          - not_null
+          - expression_is_true:
+              expression: "price > 0"
 
       - name: total_sales_amount
-        description: "Total revenue generated for the line item (quantity × price)."
+        description: "Total revenue generated for the line item (quantity × price), rounded to 2 decimals."
         tests:
           - not_null
           - expression_is_true:
               expression: "total_sales_amount > 0"
-
 
 
   - name: int_customer
@@ -71,7 +93,6 @@ models:
           - not_null
 
 
-
   - name: int_product
     description: |
       Intermediate product dimension preparation layer.
@@ -91,7 +112,6 @@ models:
         description: "Descriptive name of the product selected using deterministic deduplication logic."
         tests:
           - not_null
-
 
 
   - name: int_orders
@@ -119,7 +139,7 @@ models:
           - not_null
 
       - name: order_status
-        description: "Current status of the order (e.g., completed, cancelled)."
+        description: "Current status of the order (e.g., Completed, Pending, Cancelled)."
         tests:
           - not_null
           - accepted_values:

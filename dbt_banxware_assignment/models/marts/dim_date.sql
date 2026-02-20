@@ -1,3 +1,29 @@
+-- -----------------------------------------------------------------------------
+-- MODEL: dim_date
+--
+-- LAYER
+--   Marts (Dimensional)
+--
+-- PURPOSE
+--   Date dimension table used for time-based analysis (year/month/week/day).
+--   Generates a continuous date range based on the min/max order_date present
+--   in the sales data, padded by +/- 1 month.
+--
+-- UPSTREAM
+--   ref('int_transformed_sales_data')
+--
+-- GRAIN
+--   One row per calendar date (date_day).
+--
+-- PRIMARY KEY
+--   date_day
+--
+-- IMPLEMENTATION NOTES
+--   - bounds CTE computes start_date and end_date using observed order_date range.
+--   - date_raw generates up to 10,000 sequential days starting from start_date.
+--   - final select computes common calendar attributes.
+--   - the WHERE clause trims generated dates to <= end_date.
+-- -----------------------------------------------------------------------------
 {{ config(materialized='table') }}
 
 with bounds as (

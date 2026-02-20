@@ -4,41 +4,43 @@ models:
   - name: raw_sales_data
     description: |
       Staging model for sales data sourced from the bronze layer.
-      This model standardizes column names, casts data types
+      Standardizes column names, casts data types, parses order_date
+
+      Grain: one row per (order_id, product_id) sales line item.
 
     columns:
       - name: sales_uuid
-        description: "Surrogate identifier for each sales line item, generated from order_id and product_id."
+        description: |
+          Surrogate identifier for each sales line item, generated deterministically
+          from (order_id, product_id) using stable_uuid.
         tests:
           - not_null
+          - unique
 
       - name: order_id
-        description: "Unique identifier representing a customer order. Multiple products can belong to the same order."
+        description: |
+          Order business key. Multiple products can belong to the same order
+          (multiple rows per order_id).
         tests:
           - not_null
 
       - name: customer_id
-        description: "Foreign key referencing the customer who placed the order."
+        description: "Customer business key identifying who placed the order."
         tests:
           - not_null
 
       - name: product_id
-        description: "Unique identifier of the product sold."
+        description: "Product business key identifying which product was sold."
         tests:
           - not_null
 
       - name: product_name
-        description: "Descriptive name of the product associated with the product_id."
-        tests:
-          - not_null
-
-      - name: order_date
-        description: "Date when the order was placed. Used for time-based analysis and joins to the date dimension."
+        description: "Human-readable product name associated with product_id."
         tests:
           - not_null
 
       - name: quantity
-        description: "Number of product units sold in the order line item."
+        description: "Number of units sold for this order line item."
         tests:
           - not_null
           - expression_is_true:
@@ -51,20 +53,37 @@ models:
           - expression_is_true:
               expression: "price > 0"
 
+      - name: order_status
+        description: |
+          Status of the order (e.g., Completed, Pending, Cancelled).
+          Used downstream to filter/aggregate completed orders.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Completed', 'Pending', 'Cancelled']
+
+      - name: order_date
+        description: |
+          Parsed order date (try_to_date(order_date,'MM/DD/YYYY')).
+          Used for time-based analysis and joins to the date dimension.
+        tests:
+          - not_null
 
   - name: raw_customer_data
     description: |
       Staging model for customer data sourced from the bronze layer.
-      This model standardizes and cleans customer records.
+      Standardizes and casts customer fields and adds ingestion metadata.
+
+      Grain: one row per customer_id.
 
     columns:
       - name: customer_id
-        description: "Unique identifier for each customer."
+        description: "Customer business key (cast from source column id)."
         tests:
           - not_null
           - unique
 
       - name: customer_name
-        description: "Full name or display name of the customer."
+        description: "Customer display name (cast from source column name)."
         tests:
           - not_null

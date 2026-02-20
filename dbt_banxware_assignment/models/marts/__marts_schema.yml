@@ -7,7 +7,6 @@ models:
       Customer dimension used for customer-level slicing and aggregation.
 
       Grain: One row per customer_id.
-
     columns:
       - name: customer_id
         description: "Business key identifying the customer."
@@ -21,13 +20,11 @@ models:
           - not_null
 
 
-
   - name: dim_product
     description: |
       Product dimension used for product-level slicing and aggregation.
 
       Grain: One row per product_id.
-
     columns:
       - name: product_id
         description: "Business key identifying the product."
@@ -41,7 +38,6 @@ models:
           - not_null
 
 
-
   - name: dim_orders
     description: |
       Order header dimension that represents order-level attributes.
@@ -49,9 +45,8 @@ models:
       Grain: One row per order_id.
 
       Notes:
-      - This table is useful for filtering/segmenting orders by header attributes
-        and for enforcing referential integrity from facts to orders.
-
+      - Useful for filtering/segmenting orders by header attributes.
+      - Enforces referential integrity from facts to orders.
     columns:
       - name: order_id
         description: "Business key identifying the order."
@@ -64,10 +59,12 @@ models:
         tests:
           - not_null
 
-      # If you have it in the model, document it here too:
-      # - name: order_status
-      #   description: "Current status of the order (if available in source)."
-
+      - name: order_status
+        description: "Current status of the order (e.g., Completed, Pending, Cancelled)."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Completed', 'Pending', 'Cancelled']
 
 
   - name: dim_date
@@ -75,7 +72,6 @@ models:
       Date dimension used for time-based analysis and reporting.
 
       Grain: One row per calendar day.
-
     columns:
       - name: date_day
         description: "Calendar date (YYYY-MM-DD). Primary key of the date dimension."
@@ -98,18 +94,31 @@ models:
         tests:
           - not_null
 
+      - name: day_of_week
+        description: "Day of week extracted from date_day (Snowflake dayofweek output)."
+        tests:
+          - not_null
+
+      - name: week_of_year
+        description: "Week of year extracted from date_day."
+        tests:
+          - not_null
+
+      - name: quarter
+        description: "Calendar quarter (1–4) extracted from date_day."
+        tests:
+          - not_null
 
 
   - name: fct_transformed_sales_data
     description: |
       Sales fact table representing transaction-level revenue.
 
-      Grain: One row per sales line item (sales_uuid), typically representing
-      a unique (order_id, product_id) combination.
+      Grain: One row per sales line item (sales_uuid), representing a unique
+      (order_id, product_id) combination.
 
-      This table is the primary source for sales metrics such as
-      total sales amount, sales by product, sales by customer, etc.
-
+      This table is the primary source for sales metrics such as revenue by
+      product, customer, and date.
     columns:
       - name: sales_uuid
         description: "Surrogate key uniquely identifying the sales line item."
@@ -142,7 +151,7 @@ models:
               field: product_id
 
       - name: date_day
-        description: "Order date (YYYY-MM-DD) used for time-based analysis (joins to dim_date.date_day)."
+        description: "Order date used for time-based analysis (joins to dim_date.date_day)."
         tests:
           - not_null
           - relationships:
@@ -171,31 +180,23 @@ models:
           - expression_is_true:
               expression: "total_sales_amount > 0"
 
+
   - name: agg_completed_orders
     description: |
-      Aggregated mart representing order-level metrics
-      for completed orders only.
+      Aggregated mart representing order-level metrics for completed orders only.
 
       Grain: One row per order_id.
 
-      This model is optimized for KPI reporting such as:
+      Optimized for KPI reporting such as:
       - average order value (AOV)
       - completed order totals by customer/month
       - completed order counts and revenue trends
-
     columns:
       - name: order_id
         description: "Order business key. Primary key of this aggregate table."
         tests:
           - not_null
           - unique
-
-      - name: order_status
-        description: "Order status. This mart only contains 'Completed' orders."
-        tests:
-          - not_null
-          - accepted_values:
-              values: ['Completed']
 
       - name: customer_id
         description: "Customer business key associated with the completed order."
@@ -224,10 +225,16 @@ models:
               max_value: 12
               inclusive: true
 
+      - name: order_status
+        description: "Order status from dim_orders. This mart only contains 'Completed' orders."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Completed']
+
       - name: order_total_sales_amount
         description: "Total revenue per completed order (sum of all sales line items)."
         tests:
           - not_null
           - expression_is_true:
               expression: "order_total_sales_amount > 0"
-

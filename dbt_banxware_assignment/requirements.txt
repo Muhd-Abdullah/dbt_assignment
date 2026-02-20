@@ -1,0 +1,7 @@
+dbt-adapters==1.16.3
+dbt-common==1.27.1
+dbt-core==1.9.4
+dbt-extractor==0.6.0
+dbt-protos==1.0.431
+dbt-semantic-interfaces==0.7.5
+dbt-snowflake==1.9.2
