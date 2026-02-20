@@ -157,7 +157,7 @@ models:
         description: "Number of units sold for the sales line item."
         tests:
           - not_null
-          - dbt_utils.accepted_range:
+          - accepted_range:
               arguments:
                 min_value: 1
                 inclusive: true
@@ -166,17 +166,17 @@ models:
         description: "Unit price of the product at the time of sale."
         tests:
           - not_null
-          - dbt_utils.expression_is_true:
+          - expression_is_true:
               arguments:
-                expression: "{{ column_name }} > 0"
+                expression: "price > 0"
 
       - name: total_sales_amount
         description: "Revenue for the sales line item (quantity × price)."
         tests:
           - not_null
-          - dbt_utils.expression_is_true:
+          - expression_is_true:
               arguments:
-                expression: "{{ column_name }} > 0"
+                expression: "total_sales_amount > 0"
 
   - name: agg_completed_orders
     description: |
@@ -228,7 +228,7 @@ models:
         description: "Calendar month number (1–12) of the completed order."
         tests:
           - not_null
-          - dbt_utils.accepted_range:
+          - accepted_range:
               arguments:
                 min_value: 1
                 max_value: 12
@@ -238,7 +238,7 @@ models:
         description: "Total revenue per completed order (sum of all sales line items)."
         tests:
           - not_null
-          - dbt_utils.expression_is_true:
+          - expression_is_true:
               arguments:
-                expression: "{{ column_name }} > 0"
+                expression: "order_total_sales_amount > 0"
 

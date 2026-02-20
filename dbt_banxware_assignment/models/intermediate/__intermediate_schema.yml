@@ -45,9 +45,9 @@ models:
         description: "Total revenue generated for the line item (quantity × price)."
         tests:
           - not_null
-          - dbt_utils.expression_is_true:
+          - expression_is_true:
               arguments:
-                expression: "{{ column_name }} > 0"
+                expression: "total_sales_amount > 0"
 
 
 
